@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Text;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace com.tencent.pandora.tools
 {
@@ -12,6 +13,7 @@ namespace com.tencent.pandora.tools
         private LuaCodeFiller _filler;
         private Vector2 _horizontalScrollPosition = Vector2.zero;
         private Vector2 _verticalScrollPosition = Vector2.zero;
+
 
         #region GUI
         [MenuItem("GameObject/LuaCodeFiller", priority = 11)]
@@ -48,7 +50,7 @@ namespace com.tencent.pandora.tools
             }
         }
 
-        private void DrawSettingArea(bool hasBoxCollider, ref string variableName, ref string bindFunctionName)
+        private void DrawSettingArea( bool hasBoxCollider, ref string variableName, ref string bindFunctionName )
         {
             EditorGUILayout.TextField("变量名：", variableName, GUILayout.Width(50f));
             if (hasBoxCollider == true)
@@ -72,7 +74,7 @@ namespace com.tencent.pandora.tools
             EditorGUILayout.EndScrollView();
         }
 
-        private void DrawElement(FillerElement element)
+        private void DrawElement( FillerElement element )
         {
             EditorGUILayout.BeginHorizontal();
 
@@ -104,7 +106,25 @@ namespace com.tencent.pandora.tools
 
             if (GUILayout.Button("Execute", GUILayout.Width(80f)))
             {
-
+                //复制一份数据,否则数据变化会导致无法使用foreach遍历
+                List<FillerElement> newDataList = new List<FillerElement>();
+                foreach (var item in _filler.DataList)
+                {
+                    FillerElement element = new FillerElement();
+                    element.name = item.name;
+                    element.id = item.id;
+                    element.depth = item.depth;
+                    element.CachedTransform = item.CachedTransform;
+                    element.GameObjectSelected = item.GameObjectSelected;
+                    Dictionary<string, bool> componentDict = new Dictionary<string, bool>();
+                    foreach (var innerItem in item.ComponentsDict)
+                    {
+                        componentDict.Add(innerItem.Key, innerItem.Value);
+                    }
+                    element.ComponentsDict = componentDict;
+                    newDataList.Add(element);
+                }
+                _filler.Fill(newDataList);
             }
             EditorGUILayout.EndHorizontal();
         }

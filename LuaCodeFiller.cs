@@ -7,6 +7,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Runtime.Serialization;
+using System.IO;
+using System.Runtime.Serialization.Formatters;
+using System.Xml.Serialization;
 
 /*
  1.数据先直接使用从树形结构转化过来的列表形式，后面再处理树形结构的收放
@@ -20,18 +24,32 @@ namespace com.tencent.pandora.tools
     public class LuaCodeFiller
     {
         private static LuaCodeFiller _instance;
-        private const string _actionName = "ACTION_NAME";
+        private static LuaCodeGererator _gererator;
+        private const string ACTION_NAME = "ACTION_NAME";
         private Transform _actionRoot;
         private TreeModel<FillerElement> _actionData;
-        private List<FillerElement> _actionDataList;
-
-       
+        private List<FillerElement> _actionDataList = new List<FillerElement>();
 
         private Dictionary<Transform, FillerElement> _selected;
 
+
+        //相对路径
+        private const string LUA_FILE_PATH_TEMPLATE = "Actions/Resources/{0}/Lua";
+
+        //插入点标记
+        private const string PANEL_INIT_INSERT_POINT = "-- PanelInit_Insert_Point";
+        private const string ADD_EVENT_LISTENNERS_INSERT_POINT = "--AddEventListeners_Insert_Point";
+        private const string ON_CLICK_FUNCTION_INSERT_POINT = "--OnClickFunction_Insert_Point";
+
+        private List<string> _luaFileNameTemplateList = new List<string>()
+        {
+            "{0}Controller.lua.bytes",
+            "{0}Panel.lua.bytes",
+        };
+
         //可以展示的component类型名
 #if USING_NGUI
-        private List<string> _componentFilter = new List<string> { "UILabel", "UIScrollView", "UIEventListener", "UISprite", "UIPanel" };
+        private List<string> _componentFilter = new List<string> { "UILabel", "UIScrollView", "UIButton" };
 #endif
 
 #if USING_UGUI
@@ -45,12 +63,13 @@ namespace com.tencent.pandora.tools
                 if (_instance == null)
                 {
                     _instance = new LuaCodeFiller();
-                    _instance.SetActionRoot();
+                    _gererator = new LuaCodeGererator();
                 }
+                _instance.SetActionRoot();
                 return _instance;
             }
         }
-        public string ActionName { get { return _actionName; } }
+        public string ActionName { get { return ACTION_NAME; } }
 
         public Transform ActionRoot { get { return _actionRoot; } set { _actionRoot = value; } }
 
@@ -61,12 +80,16 @@ namespace com.tencent.pandora.tools
             //如果_root 为空，自动赋值
             if (_actionRoot == null)
             {
-                string actionName = EditorPrefs.GetString(_actionName, "");
+                string actionName = EditorPrefs.GetString(ACTION_NAME, "");
                 if (actionName != "")
                 {
                     GameObject go = GameObject.Find(actionName);
                     _actionRoot = (go == null) ? null : go.transform;
                 }
+            }
+            if (_actionRoot == null)
+            {
+                return;
             }
             UpdateActionData();
         }
@@ -75,7 +98,6 @@ namespace com.tencent.pandora.tools
         {
             UpdateActionDataList();
             //todo 生成树形结构
-            Debug.Log("");
 
         }
         private void UpdateActionDataList()
@@ -89,7 +111,7 @@ namespace com.tencent.pandora.tools
             Recursive(_actionRoot, -1, _actionDataList);
         }
 
-        private void Recursive(Transform trans, int depth, List<FillerElement> dataList)
+        private void Recursive( Transform trans, int depth, List<FillerElement> dataList )
         {
             FillerElement element = new FillerElement();
             element.CachedTransform = trans;
@@ -121,7 +143,7 @@ namespace com.tencent.pandora.tools
         }
 
 
-        private List<string> GetFilterdComponentNames(Transform trans)
+        private List<string> GetFilterdComponentNames( Transform trans )
         {
             List<string> result = new List<string>();
             string pattern = @"\([^)]*\)";
@@ -141,7 +163,85 @@ namespace com.tencent.pandora.tools
             return result;
         }
 
-  
+        public void Fill( List<FillerElement> dataList )
+        {
+            _gererator.GenerateLuaCode(dataList);
+            WriteData();
+        }
+
+        private void LoadData()
+        {
+            //_gererator. = LuaCodeRecorder.Read(DataType.Function, LuaCodeFiller.Instance.ActionRoot.name);
+            //_componentDataDict = LuaCodeRecorder.Read(DataType.Component, LuaCodeFiller.Instance.ActionRoot.name);
+        }
+
+        private void WriteData()
+        {
+            LuaCodeRecorder.Write(DataType.Function, ActionRoot.name, _gererator.FunctionDataDict);
+            LuaCodeRecorder.Write(DataType.Component, ActionRoot.name, _gererator.ComponentDataDict);
+            LuaCodeRecorder.Write(DataType.ButtonFunctionMap, ActionRoot.name, _gererator.ButtonFunctionMapDict);
+        }
+
+        private void FillPanelInitArea()
+        {
+
+        }
+
+        private void FillAddEventListenersArea()
+        {
+
+        }
+
+        private void FillOnClickFunctionArea()
+        {
+
+        }
+
+        //连接字典value值
+        private string ConcatDictValue( Dictionary<string, string> dict, string seperator )
+        {
+            StringBuilder sb = new StringBuilder(512);
+            foreach (var item in dict)
+            {
+                sb.Append(item.Value);
+                sb.Append(seperator);
+            }
+            return sb.ToString().Substring(0, sb.Length - 1);
+        }
+
+        //private static string GetLuaFilePath( string actionName )
+        //{
+
+        //    string folderPath = Path.Combine(Application.dataPath, _relativeParentPath);
+        //    string dataFileName;
+        //    switch (type)
+        //    {
+        //        case DataType.Function:
+        //            dataFileName = string.Format(_functionDataFileName, actionName);
+        //            break;
+        //        case DataType.Component:
+        //            dataFileName = string.Format(_componentDataFileName, actionName);
+        //            break;
+        //        case DataType.ButtonFunctionMap:
+        //            dataFileName = string.Format(_buttonFunctionMapDataFileName, actionName);
+        //            break;
+        //        default:
+        //            dataFileName = "";
+        //            break;
+        //    }
+
+        //    if (string.IsNullOrEmpty(dataFileName))
+        //    {
+        //        return "";
+        //    }
+
+        //    return Path.Combine(folderPath, dataFileName);
+        //}
+
+        private void Insert()
+        {
+
+        }
 
     }
 
