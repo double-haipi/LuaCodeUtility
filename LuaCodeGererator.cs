@@ -1,4 +1,4 @@
-﻿/*
+/*
 思想:
  * 所有的组件都会存放在_componentData中
  * 选定的button,需要绑定事件的,放到_functionData中

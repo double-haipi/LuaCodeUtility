@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections;
@@ -47,6 +47,7 @@ namespace com.tencent.pandora.tools
             if (_filler.ActionRoot != null && _filler.ActionRoot.name != EditorPrefs.GetString(_filler.ActionName))
             {
                 EditorPrefs.SetString(_filler.ActionName, _filler.ActionRoot.name);
+                _filler.SetActionRoot();
             }
         }
 

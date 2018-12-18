@@ -1,4 +1,4 @@
-﻿#define USING_NGUI
+#define USING_NGUI
 //#define USING_UGUI
 using UnityEngine;
 using UnityEditor;
@@ -111,7 +111,7 @@ namespace com.tencent.pandora.tools
             Recursive(_actionRoot, -1, _actionDataList);
         }
 
-        private void Recursive( Transform trans, int depth, List<FillerElement> dataList )
+        private void Recursive(Transform trans, int depth, List<FillerElement> dataList)
         {
             FillerElement element = new FillerElement();
             element.CachedTransform = trans;
@@ -143,7 +143,7 @@ namespace com.tencent.pandora.tools
         }
 
 
-        private List<string> GetFilterdComponentNames( Transform trans )
+        private List<string> GetFilterdComponentNames(Transform trans)
         {
             List<string> result = new List<string>();
             string pattern = @"\([^)]*\)";
@@ -163,10 +163,12 @@ namespace com.tencent.pandora.tools
             return result;
         }
 
-        public void Fill( List<FillerElement> dataList )
+        public void Fill(List<FillerElement> dataList)
         {
             _gererator.GenerateLuaCode(dataList);
             WriteData();
+            Dictionary<string, string> fillContent = GetFillContentDict();
+            FillArea(fillContent);
         }
 
         private void LoadData()
@@ -177,28 +179,48 @@ namespace com.tencent.pandora.tools
 
         private void WriteData()
         {
-            LuaCodeRecorder.Write(DataType.Function, ActionRoot.name, _gererator.FunctionDataDict);
             LuaCodeRecorder.Write(DataType.Component, ActionRoot.name, _gererator.ComponentDataDict);
             LuaCodeRecorder.Write(DataType.ButtonFunctionMap, ActionRoot.name, _gererator.ButtonFunctionMapDict);
+            LuaCodeRecorder.Write(DataType.Function, ActionRoot.name, _gererator.FunctionDataDict);
         }
 
-        private void FillPanelInitArea()
+        private Dictionary<string, string> GetFillContentDict()
         {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            string componentContent = ConcatDictValue(_gererator.ComponentDataDict, "\r\n") + PANEL_INIT_INSERT_POINT;
+            string buttonFunctionMapContent = ConcatDictValue(_gererator.ButtonFunctionMapDict, "\r\n") + ADD_EVENT_LISTENNERS_INSERT_POINT;
+            string functionContent = ConcatDictValue(_gererator.FunctionDataDict, "\r\n") + ON_CLICK_FUNCTION_INSERT_POINT;
 
+            result.Add(PANEL_INIT_INSERT_POINT, componentContent);
+            result.Add(ADD_EVENT_LISTENNERS_INSERT_POINT, buttonFunctionMapContent);
+            result.Add(ON_CLICK_FUNCTION_INSERT_POINT, functionContent);
+            return result;
         }
 
-        private void FillAddEventListenersArea()
+        private void FillArea(Dictionary<string, string> contentDict)
         {
-
-        }
-
-        private void FillOnClickFunctionArea()
-        {
-
+            for (int i = 0, length = _luaFileNameTemplateList.Count; i < length; i++)
+            {
+                string luaFileFolderPath = Path.Combine(Application.dataPath, string.Format(LUA_FILE_PATH_TEMPLATE, _actionRoot.name));
+                string luaFileName = string.Format(_luaFileNameTemplateList[i], _actionRoot.name);
+                string luaFilePath = Path.Combine(luaFileFolderPath, luaFileName);
+                if (File.Exists(luaFilePath) == false)
+                {
+                    Logger.Log(luaFilePath + "不存在");
+                    return;
+                }
+                string fileContent = File.ReadAllText(luaFilePath);
+                var enumrator = contentDict.GetEnumerator();
+                while (enumrator.MoveNext() == true)
+                {
+                    fileContent = Regex.Replace(fileContent, enumrator.Current.Key, enumrator.Current.Value);
+                }
+                File.WriteAllText(luaFilePath, fileContent);
+            }
         }
 
         //连接字典value值
-        private string ConcatDictValue( Dictionary<string, string> dict, string seperator )
+        private string ConcatDictValue(Dictionary<string, string> dict, string seperator)
         {
             StringBuilder sb = new StringBuilder(512);
             foreach (var item in dict)
@@ -209,33 +231,10 @@ namespace com.tencent.pandora.tools
             return sb.ToString().Substring(0, sb.Length - 1);
         }
 
-        //private static string GetLuaFilePath( string actionName )
+        //private static string GetLuaFilePath()
         //{
 
-        //    string folderPath = Path.Combine(Application.dataPath, _relativeParentPath);
-        //    string dataFileName;
-        //    switch (type)
-        //    {
-        //        case DataType.Function:
-        //            dataFileName = string.Format(_functionDataFileName, actionName);
-        //            break;
-        //        case DataType.Component:
-        //            dataFileName = string.Format(_componentDataFileName, actionName);
-        //            break;
-        //        case DataType.ButtonFunctionMap:
-        //            dataFileName = string.Format(_buttonFunctionMapDataFileName, actionName);
-        //            break;
-        //        default:
-        //            dataFileName = "";
-        //            break;
-        //    }
 
-        //    if (string.IsNullOrEmpty(dataFileName))
-        //    {
-        //        return "";
-        //    }
-
-        //    return Path.Combine(folderPath, dataFileName);
         //}
 
         private void Insert()
