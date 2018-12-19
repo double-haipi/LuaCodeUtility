@@ -51,7 +51,7 @@ namespace com.tencent.pandora.tools
             }
         }
 
-        private void DrawSettingArea( bool hasBoxCollider, ref string variableName, ref string bindFunctionName )
+        private void DrawSettingArea(bool hasBoxCollider, ref string variableName, ref string bindFunctionName)
         {
             EditorGUILayout.TextField("变量名：", variableName, GUILayout.Width(50f));
             if (hasBoxCollider == true)
@@ -75,7 +75,7 @@ namespace com.tencent.pandora.tools
             EditorGUILayout.EndScrollView();
         }
 
-        private void DrawElement( FillerElement element )
+        private void DrawElement(FillerElement element)
         {
             EditorGUILayout.BeginHorizontal();
 
@@ -96,13 +96,12 @@ namespace com.tencent.pandora.tools
 
             EditorGUILayout.EndHorizontal();
         }
-
         private void DrawButtons()
         {
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Refresh", GUILayout.Width(80f)))
             {
-
+                _filler.UpdateActionData();
             }
 
             if (GUILayout.Button("Execute", GUILayout.Width(80f)))

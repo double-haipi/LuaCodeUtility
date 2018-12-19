@@ -1,0 +1,1 @@
+{"closeButton":"self.buttonFunctionMap[self.panel.closeButton] = function() self:OnCloseButtonClick(self.panel.closeButton); end;","submitButton":"self.buttonFunctionMap[self.panel.submitButton] = function() self:OnSubmitButtonClick(self.panel.submitButton); end;"}

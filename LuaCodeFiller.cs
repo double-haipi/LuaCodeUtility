@@ -94,7 +94,7 @@ namespace com.tencent.pandora.tools
             UpdateActionData();
         }
 
-        private void UpdateActionData()
+        public void UpdateActionData()
         {
             UpdateActionDataList();
             //todo 生成树形结构
@@ -187,8 +187,8 @@ namespace com.tencent.pandora.tools
         private Dictionary<string, string> GetFillContentDict()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
-            string componentContent = ConcatDictValue(_gererator.ComponentDataDict, "\r\n") + PANEL_INIT_INSERT_POINT;
-            string buttonFunctionMapContent = ConcatDictValue(_gererator.ButtonFunctionMapDict, "\r\n") + ADD_EVENT_LISTENNERS_INSERT_POINT;
+            string componentContent = ConcatDictValue(_gererator.ComponentDataDict, "\r\n\t") + PANEL_INIT_INSERT_POINT;
+            string buttonFunctionMapContent = ConcatDictValue(_gererator.ButtonFunctionMapDict, "\r\n\t") + ADD_EVENT_LISTENNERS_INSERT_POINT;
             string functionContent = ConcatDictValue(_gererator.FunctionDataDict, "\r\n") + ON_CLICK_FUNCTION_INSERT_POINT;
 
             result.Add(PANEL_INIT_INSERT_POINT, componentContent);
@@ -228,7 +228,7 @@ namespace com.tencent.pandora.tools
                 sb.Append(item.Value);
                 sb.Append(seperator);
             }
-            return sb.ToString().Substring(0, sb.Length - 1);
+            return sb.ToString();
         }
 
         //private static string GetLuaFilePath()
