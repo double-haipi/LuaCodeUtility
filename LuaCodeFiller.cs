@@ -108,35 +108,35 @@ namespace com.tencent.pandora.tools
             }
             _actionDataList.Clear();
 
-            Recursive(_actionRoot, -1, _actionDataList);
+            Recursive(_actionRoot, -1, null, _actionDataList);
         }
 
-        private void Recursive(Transform trans, int depth, List<FillerElement> dataList)
-        {
+        private void Recursive(Transform trans, int depth, FillerElement parent, List<FillerElement> dataList) {
             FillerElement element = new FillerElement();
             element.CachedTransform = trans;
             element.name = trans.name;
             element.id = trans.gameObject.GetInstanceID();
             element.depth = depth;
             element.ComponentsDict = new Dictionary<string, bool>();
+            //建立父子关系
+            element.parent = parent;
+            if (parent != null) {
+                parent.children.Add(element);
+            }
 
             List<string> componentNames = GetFilterdComponentNames(trans);
-            foreach (var item in componentNames)
-            {
-                if (!element.ComponentsDict.ContainsKey(item))
-                {
+            foreach (var item in componentNames) {
+                if (!element.ComponentsDict.ContainsKey(item)) {
                     element.ComponentsDict.Add(item, false);
                 }
             }
 
             dataList.Add(element);
 
-            if (trans.childCount > 0)
-            {
+            if (trans.childCount > 0) {
                 depth++;
-                for (int i = 0, length = trans.childCount; i < length; i++)
-                {
-                    Recursive(trans.GetChild(i), depth, dataList);
+                for (int i = 0, length = trans.childCount; i < length; i++) {
+                    Recursive(trans.GetChild(i), depth, element, dataList);
                 }
             }
 

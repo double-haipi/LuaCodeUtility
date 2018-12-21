@@ -36,11 +36,26 @@ namespace com.tencent.pandora.tools
         {
             EditorGUILayout.BeginVertical();
             DrawActionPanelField();
+            DrawFoldOrUnfold();
             DrawDataList();
             DrawButtons();
             EditorGUILayout.EndVertical();
         }
 
+        private bool _isFold = false;
+        private void DrawFoldOrUnfold()
+        {
+            string iconDesc = "";
+            if (_isFold)
+            {
+                iconDesc = "\u25BA";
+            }
+            else
+            {
+                iconDesc = "\u25BC";
+            }
+            _isFold = GUILayout.Toggle(_isFold, iconDesc, "PreToolbar2");
+        }
         private void DrawActionPanelField()
         {
             _filler.ActionRoot = (Transform)EditorGUILayout.ObjectField("ActionPanel：", _filler.ActionRoot, typeof(Transform), true);
