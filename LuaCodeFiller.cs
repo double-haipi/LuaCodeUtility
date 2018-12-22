@@ -1,4 +1,4 @@
-#define USING_NGUI
+﻿#define USING_NGUI
 //#define USING_UGUI
 using UnityEngine;
 using UnityEditor;
@@ -27,7 +27,7 @@ namespace com.tencent.pandora.tools
         private static LuaCodeGererator _gererator;
         private const string ACTION_NAME = "ACTION_NAME";
         private Transform _actionRoot;
-        private TreeModel<FillerElement> _actionData;
+        private FillerElement _actionDataRoot;
         private List<FillerElement> _actionDataList = new List<FillerElement>();
 
         private Dictionary<Transform, FillerElement> _selected;
@@ -74,6 +74,7 @@ namespace com.tencent.pandora.tools
         public Transform ActionRoot { get { return _actionRoot; } set { _actionRoot = value; } }
 
         public List<FillerElement> DataList { get { return _actionDataList; } }
+        public FillerElement DataRoot { get { return _actionDataRoot; } }
 
         public void SetActionRoot()
         {
@@ -98,6 +99,7 @@ namespace com.tencent.pandora.tools
         {
             UpdateActionDataList();
             //todo 生成树形结构
+            _actionDataRoot = TreeElementUtility.ListToTree<FillerElement>(_actionDataList);
 
         }
         private void UpdateActionDataList()
@@ -108,42 +110,42 @@ namespace com.tencent.pandora.tools
             }
             _actionDataList.Clear();
 
-            Recursive(_actionRoot, -1, null, _actionDataList);
+            Recursive(_actionRoot, -1, _actionDataList);
         }
 
-        private void Recursive(Transform trans, int depth, FillerElement parent, List<FillerElement> dataList) {
+        private void Recursive( Transform trans, int depth, List<FillerElement> dataList )
+        {
             FillerElement element = new FillerElement();
             element.CachedTransform = trans;
             element.name = trans.name;
             element.id = trans.gameObject.GetInstanceID();
             element.depth = depth;
             element.ComponentsDict = new Dictionary<string, bool>();
-            //建立父子关系
-            element.parent = parent;
-            if (parent != null) {
-                parent.children.Add(element);
-            }
 
             List<string> componentNames = GetFilterdComponentNames(trans);
-            foreach (var item in componentNames) {
-                if (!element.ComponentsDict.ContainsKey(item)) {
+            foreach (var item in componentNames)
+            {
+                if (!element.ComponentsDict.ContainsKey(item))
+                {
                     element.ComponentsDict.Add(item, false);
                 }
             }
 
             dataList.Add(element);
 
-            if (trans.childCount > 0) {
+            if (trans.childCount > 0)
+            {
                 depth++;
-                for (int i = 0, length = trans.childCount; i < length; i++) {
-                    Recursive(trans.GetChild(i), depth, element, dataList);
+                for (int i = 0, length = trans.childCount; i < length; i++)
+                {
+                    Recursive(trans.GetChild(i), depth, dataList);
                 }
             }
 
         }
 
 
-        private List<string> GetFilterdComponentNames(Transform trans)
+        private List<string> GetFilterdComponentNames( Transform trans )
         {
             List<string> result = new List<string>();
             string pattern = @"\([^)]*\)";
@@ -163,7 +165,7 @@ namespace com.tencent.pandora.tools
             return result;
         }
 
-        public void Fill(List<FillerElement> dataList)
+        public void Fill( List<FillerElement> dataList )
         {
             _gererator.GenerateLuaCode(dataList);
             WriteData();
@@ -197,7 +199,7 @@ namespace com.tencent.pandora.tools
             return result;
         }
 
-        private void FillArea(Dictionary<string, string> contentDict)
+        private void FillArea( Dictionary<string, string> contentDict )
         {
             for (int i = 0, length = _luaFileNameTemplateList.Count; i < length; i++)
             {
@@ -220,7 +222,7 @@ namespace com.tencent.pandora.tools
         }
 
         //连接字典value值
-        private string ConcatDictValue(Dictionary<string, string> dict, string seperator)
+        private string ConcatDictValue( Dictionary<string, string> dict, string seperator )
         {
             StringBuilder sb = new StringBuilder(512);
             foreach (var item in dict)
@@ -250,11 +252,31 @@ namespace com.tencent.pandora.tools
         [SerializeField]
         private bool _gameObjectSelected = false;
         private Dictionary<string, bool> _componentsDict;
-        private Transform _cachedtransform;
+        private Transform _cachedTransform;
+        private bool _isFold = false;
 
-        public bool GameObjectSelected { get { return _gameObjectSelected; } set { _gameObjectSelected = value; } }
-        public Dictionary<string, bool> ComponentsDict { get { return _componentsDict; } set { _componentsDict = value; } }
+        public bool GameObjectSelected
+        {
+            get { return _gameObjectSelected; }
+            set { _gameObjectSelected = value; }
+        }
 
-        public Transform CachedTransform { get { return _cachedtransform; } set { _cachedtransform = value; } }
+        public Dictionary<string, bool> ComponentsDict
+        {
+            get { return _componentsDict; }
+            set { _componentsDict = value; }
+        }
+
+        public Transform CachedTransform
+        {
+            get { return _cachedTransform; }
+            set { _cachedTransform = value; }
+        }
+
+        public bool IsFold
+        {
+            get { return _isFold; }
+            set { _isFold = value; }
+        }
     }
 }
